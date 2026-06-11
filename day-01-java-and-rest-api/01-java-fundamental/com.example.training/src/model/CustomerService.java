@@ -7,7 +7,7 @@ import java.util.Map;
 
 public class CustomerService {
 
-    private Map<Long, Customer> customerStorage = new HashMap<>();
+    public Map<Long, Customer> customerStorage = new HashMap<>();
     private Long sequence = 0L;
 
     public Customer createCustomer(String fullName, String email, String phoneNumber) {
