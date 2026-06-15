@@ -16,7 +16,7 @@ import lombok.Setter;
 public class CreateCustomerRequest {
 	@JsonProperty("full_name")
 	public String fullName;
-
+	
 	public String email;
 
 	@JsonProperty("phone_number")
