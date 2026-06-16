@@ -90,6 +90,9 @@ public class CustomerService {
 
     // Service editCustomerById
     public CustomerResponse editCustomerById(Long id, CreateCustomerRequest request) {
+        if (customerStorage.get(id) == null) {
+            throw new CustomerNotFoundException(id);
+        }
         Customer customer = customerStorage.get(id);
 
         // Fullname Validation
