@@ -1,6 +1,6 @@
 package com.fif.training.exercisespringboot.DTO;
 
-public record ApiResponse<T>(
+public record ApiResponseDto<T>(
         String message,
         T data) {
 }

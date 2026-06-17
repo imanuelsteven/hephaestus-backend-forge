@@ -13,9 +13,12 @@ import lombok.Setter;
 @Setter
 @Getter
 @JsonPropertyOrder({
+		"id",
 		"full_name",
 		"email",
-		"phone_number"
+		"phone_number",
+		"created_at",
+		"updated_at"
 })
 public class CreateCustomerRequest {
 

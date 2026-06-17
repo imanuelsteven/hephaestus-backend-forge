@@ -2,6 +2,7 @@ package com.fif.training.exercisespringboot.DTO;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import java.time.ZonedDateTime;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -12,7 +13,9 @@ import lombok.Setter;
         "id",
         "full_name",
         "email",
-        "phone_number"
+        "phone_number",
+        "created_at",
+        "updated_at"
 })
 public class CustomerResponse {
     private Long id;
@@ -23,4 +26,10 @@ public class CustomerResponse {
 
     @JsonProperty("phone_number")
     private String phoneNumber;
+
+    @JsonProperty("created_at")
+    private ZonedDateTime createdAt;
+
+    @JsonProperty("updated_at")
+    private ZonedDateTime updatedAt;
 }

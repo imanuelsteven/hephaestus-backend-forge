@@ -1,6 +1,6 @@
 package com.fif.training.exercisespringboot.Service;
 
-import java.util.ArrayList;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import com.fif.training.exercisespringboot.DTO.CreateCustomerRequest;
 import com.fif.training.exercisespringboot.DTO.CustomerResponse;
 import com.fif.training.exercisespringboot.DTO.PatchCustomerRequest;
+import com.fif.training.exercisespringboot.DTO.UpdateCustomerRequest;
 import com.fif.training.exercisespringboot.Exception.CustomerNotFoundException;
 import com.fif.training.exercisespringboot.Model.Customer;
 
@@ -25,30 +26,38 @@ public class CustomerService {
         response.setFullName(customer.getFullName());
         response.setEmail(customer.getEmail());
         response.setPhoneNumber(customer.getPhoneNumber());
+        response.setCreatedAt(customer.getCreatedAt());
+        response.setUpdatedAt(customer.getUpdatedAt());
         return response;
     }
 
     // Service Create Customer
     public CustomerResponse createCustomer(CreateCustomerRequest request) {
-        // Increment ID
-        id++;
 
         // Fullname Validation
         if (request.getFullName() == null || request.getFullName().isBlank()) {
             throw new IllegalArgumentException("Full Name Tidak Boleh Kosong!");
         }
 
+        // Increment ID
+        id++;
+
         // Cleaning RequestBody
         String cleanFullname = request.getFullName().trim().toLowerCase();
         String cleanPhoneNumber = request.getPhoneNumber().trim();
         String cleanEmail = request.getEmail().trim().toLowerCase();
+
+        // Zone Date Time
+        ZonedDateTime now = ZonedDateTime.now();
 
         // Create new Customer
         Customer customer = new Customer(
                 id,
                 cleanFullname,
                 cleanEmail,
-                cleanPhoneNumber);
+                cleanPhoneNumber,
+                now,
+                null);
 
         // Save in storage
         customerStorage.put(id, customer);
@@ -59,13 +68,29 @@ public class CustomerService {
     }
 
     // Service getAllCustomer
-    public List<CustomerResponse> getAllCustomer() {
+    public List<CustomerResponse> getAllCustomer(String name, String email) {
+        String keywordName = name == null ? "" : name.trim().toLowerCase();
+        String keywordEmail = email == null ? "" : email.trim().toLowerCase();
 
-        List<CustomerResponse> response = new ArrayList<>();
-        for (Customer customer : customerStorage.values()) {
-            response.add(toCustomerResponse(customer));
-        }
-        return response;
+        boolean nameProvided = !keywordName.isBlank();
+        boolean emailProvided = !keywordEmail.isBlank();
+
+        return customerStorage.values().stream()
+                .filter(customer -> {
+                    boolean nameMatch = nameProvided &&
+                            customer.getFullName().toLowerCase().contains(keywordName);
+
+                    boolean emailMatch = emailProvided &&
+                            customer.getEmail().toLowerCase().contains(keywordEmail);
+
+                    if (!nameProvided && !emailProvided) {
+                        return true;
+                    }
+
+                    return nameMatch || emailMatch;
+                })
+                .map(this::toCustomerResponse)
+                .collect(Collectors.toList());
     }
 
     // Service getCustomerById
@@ -90,7 +115,7 @@ public class CustomerService {
     }
 
     // Service editCustomerById
-    public CustomerResponse editCustomerById(Long id, CreateCustomerRequest request) {
+    public CustomerResponse editCustomerById(Long id, UpdateCustomerRequest request) {
 
         // Check Customer is Exist or not
         if (customerStorage.get(id) == null) {
@@ -103,6 +128,13 @@ public class CustomerService {
         if (request.getFullName() == null || request.getFullName().isBlank()) {
             throw new IllegalArgumentException("Full Name Tidak Boleh Kosong!");
         }
+        if (request.getEmail() == null || request.getEmail().isBlank()) {
+            throw new IllegalArgumentException("Email Tidak Boleh Kosong!");
+        }
+
+        if (request.getPhoneNumber() == null || request.getPhoneNumber().isBlank()) {
+            throw new IllegalArgumentException("Phone Number Tidak Boleh Kosong!");
+        }
 
         // Cleaning RequestBody
         String cleanFullname = request.getFullName().trim().toLowerCase();
@@ -114,6 +146,8 @@ public class CustomerService {
             customer.setFullName(cleanFullname);
             customer.setEmail(cleanEmail);
             customer.setPhoneNumber(cleanPhoneNumber);
+            customer.setUpdatedAt(ZonedDateTime.now());
+
         }
 
         // Mapping Response
@@ -126,6 +160,7 @@ public class CustomerService {
 
         // Get User by ID
         Customer customer = customerStorage.get(id);
+
         // Check Customer is Exist or not
         if (customer == null) {
             throw new CustomerNotFoundException(id);
@@ -135,26 +170,20 @@ public class CustomerService {
         if (request.getFullName() != null) {
             customer.setFullName(request.getFullName().trim().toLowerCase());
         }
+
         if (request.getEmail() != null) {
             customer.setEmail(request.getEmail().trim().toLowerCase());
         }
+
         if (request.getPhoneNumber() != null) {
-            customer.setPhoneNumber(request.getPhoneNumber().trim().toLowerCase());
+            customer.setPhoneNumber(request.getPhoneNumber().trim());
         }
 
+        customer.setUpdatedAt(ZonedDateTime.now());
+
+        // Mapping to response
         CustomerResponse response = toCustomerResponse(customer);
         return response;
-    }
-
-    // Search searchCustomerByName
-    public List<CustomerResponse> searchCustomerByName(String name) {
-        String keyword = name.toLowerCase();
-
-        return customerStorage.values().stream()
-                .filter(customer -> customer.getFullName().toLowerCase().contains(keyword))
-                .map(this::toCustomerResponse)
-                .collect(Collectors.toList());
-
     }
 
 }
