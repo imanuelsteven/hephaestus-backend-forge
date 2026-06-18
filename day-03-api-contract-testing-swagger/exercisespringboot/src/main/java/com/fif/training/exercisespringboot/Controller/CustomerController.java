@@ -33,7 +33,7 @@ import org.springframework.http.HttpStatus;
 public class CustomerController {
 
     // Service
-    CustomerService service = new CustomerService();
+    CustomerService customerService = new CustomerService();
 
     // GET All Customer API
     @Operation(summary = "Get customer list", description = "Get all customers if query param not exist")
@@ -43,7 +43,7 @@ public class CustomerController {
     public List<CustomerResponse> getAllCustomer(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String email) {
-        return service.getAllCustomer(name, email);
+        return customerService.getAllCustomer(name, email);
     }
 
     // POST Customer API
@@ -53,7 +53,7 @@ public class CustomerController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponseDto<CustomerResponse> createCustomer(@Valid @RequestBody CreateCustomerRequest request) {
-        CustomerResponse response = service.createCustomer(request);
+        CustomerResponse response = customerService.createCustomer(request);
         return new ApiResponseDto<>("Customer Created!", response);
     }
 
@@ -64,18 +64,18 @@ public class CustomerController {
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     public CustomerResponse getCustomerbyId(@PathVariable Long id) {
-        CustomerResponse response = service.getCustomerById(id);
+        CustomerResponse response = customerService.getCustomerById(id);
         return response;
     }
 
     // DELETE Customer By ID API
-    @Operation(summary = "Delete customer", description = "Delete Existing customer")
+    @Operation(summary = "Delete customer", description = "Delete Existing customer by id")
     @ApiResponse(responseCode = "204", description = "No Content")
     @ApiResponse(responseCode = "404", description = "Customer not found")
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public ApiResponseDto<CustomerResponse> deleteCustomerById(@PathVariable Long id) {
-        CustomerResponse response = service.deleteCustomerById(id);
+        CustomerResponse response = customerService.deleteCustomerById(id);
         return new ApiResponseDto<>("Customer Deleted!", response);
     }
 
@@ -89,7 +89,7 @@ public class CustomerController {
     public ApiResponseDto<CustomerResponse> editCustomerById(@PathVariable Long id,
             @Valid @RequestBody UpdateCustomerRequest request) {
 
-        CustomerResponse response = service.editCustomerById(id, request);
+        CustomerResponse response = customerService.editCustomerById(id, request);
         return new ApiResponseDto<>("Customer data updated successfully", response);
     }
 
@@ -101,7 +101,7 @@ public class CustomerController {
     @ResponseStatus(HttpStatus.OK)
     public ApiResponseDto<CustomerResponse> patchCustomerById(@PathVariable Long id,
             @Valid @RequestBody PatchCustomerRequest request) {
-        CustomerResponse response = service.patchCustomerById(id, request);
+        CustomerResponse response = customerService.patchCustomerById(id, request);
         return new ApiResponseDto<>("Customer data updated successfully", response);
     }
 
