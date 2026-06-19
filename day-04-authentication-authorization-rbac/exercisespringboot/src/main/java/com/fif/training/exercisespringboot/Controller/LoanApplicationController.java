@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -68,12 +69,14 @@ public class LoanApplicationController {
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     public List<LoanApplicationResponse> getAllLoanApplications(
-            @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String authorization) {
+            @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String authorization,
+            @RequestParam(required = false) String status,
+            @RequestParam(name = "customer_id", required = false) Long customerId) {
 
         AuthContext authContext = authUtil.getAuthContext(authorization);
-        roleValidator.requireAnyRole(authContext, Roles.ADMIN, Roles.STAFF, Roles.APPROVER);
+        roleValidator.requireAnyRole(authContext, Roles.ADMIN, Roles.STAFF, Roles.APPROVER, Roles.MANAGER);
 
-        return loanApplicationService.getAllLoanApplications();
+        return loanApplicationService.getAllLoanApplications(status, customerId);
     }
 
     // GET Loan By Id
@@ -85,32 +88,33 @@ public class LoanApplicationController {
             @PathVariable Long id) {
 
         AuthContext authContext = authUtil.getAuthContext(authorization);
-        roleValidator.requireAnyRole(authContext, Roles.ADMIN, Roles.STAFF, Roles.APPROVER);
+        roleValidator.requireAnyRole(authContext, Roles.ADMIN, Roles.STAFF, Roles.APPROVER, Roles.MANAGER);
 
         return loanApplicationService.getLoanApplicationById(id);
     }
 
     // PATCH Approve Loan By Id
     @SecurityRequirement(name = "bearerAuth")
-    @PatchMapping("/approve/{id}")
+    @PatchMapping("/{id}/approve")
     @ResponseStatus(HttpStatus.OK)
     public ApiResponseDto<LoanApplicationResponse> approveLoanApplication(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String authorization,
             @PathVariable Long id) {
 
         AuthContext authContext = authUtil.getAuthContext(authorization);
-        roleValidator.requireAnyRole(authContext, Roles.ADMIN, Roles.APPROVER);
+        roleValidator.requireAnyRole(authContext, Roles.ADMIN, Roles.APPROVER, Roles.MANAGER);
 
         LoanApplicationResponse response = loanApplicationService.approveLoanApplication(
                 id,
-                authContext.getUsername());
+                authContext.getUsername(),
+                authContext.getRole());
 
         return new ApiResponseDto<>("Loan Application Approved!", response);
     }
 
     // PATCH Reject Loan By Id
     @SecurityRequirement(name = "bearerAuth")
-    @PatchMapping("/reject/{id}")
+    @PatchMapping("/{id}/reject")
     @ResponseStatus(HttpStatus.OK)
     public ApiResponseDto<LoanApplicationResponse> rejectLoanApplication(
             @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String authorization,
@@ -125,4 +129,23 @@ public class LoanApplicationController {
 
         return new ApiResponseDto<>("Loan Application Rejected!", response);
     }
+
+    // PATCH Cancle Loan By Id
+    @SecurityRequirement(name = "bearerAuth")
+    @PatchMapping("/{id}/cancle")
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResponseDto<LoanApplicationResponse> cancleLoanApplication(
+            @Parameter(hidden = true) @RequestHeader(value = "Authorization", required = false) String authorization,
+            @PathVariable Long id) {
+
+        AuthContext authContext = authUtil.getAuthContext(authorization);
+        roleValidator.requireAnyRole(authContext, Roles.ADMIN, Roles.APPROVER, Roles.STAFF);
+
+        LoanApplicationResponse response = loanApplicationService.cancleLoanApplication(
+                id,
+                authContext.getUsername());
+
+        return new ApiResponseDto<>("Loan Application Rejected!", response);
+    }
+
 }

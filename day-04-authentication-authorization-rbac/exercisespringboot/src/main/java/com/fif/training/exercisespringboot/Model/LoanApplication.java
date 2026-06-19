@@ -19,7 +19,7 @@ public class LoanApplication {
     Integer loanAmount;
     Integer tenorMonth;
     String purpose;
-    String status;
+    LoanStatus status;
     private ZonedDateTime createdAt;
     private ZonedDateTime updatedAt;
     private ZonedDateTime approvedAt;

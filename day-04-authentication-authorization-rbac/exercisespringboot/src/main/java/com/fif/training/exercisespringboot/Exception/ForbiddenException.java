@@ -5,4 +5,8 @@ public class ForbiddenException extends RuntimeException {
         super("You do not have permission to access this resource!");
     }
 
+    public ForbiddenException(String message) {
+        super(message);
+    }
+
 }

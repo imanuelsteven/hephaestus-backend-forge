@@ -9,8 +9,11 @@ import org.springframework.stereotype.Service;
 
 import com.fif.training.exercisespringboot.DTO.Loan.LoanApplicationRequest;
 import com.fif.training.exercisespringboot.DTO.Loan.LoanApplicationResponse;
+import com.fif.training.exercisespringboot.Exception.ForbiddenException;
 import com.fif.training.exercisespringboot.Exception.LoanNotFoundException;
 import com.fif.training.exercisespringboot.Model.LoanApplication;
+import com.fif.training.exercisespringboot.Model.LoanStatus;
+import com.fif.training.exercisespringboot.Model.Roles;
 
 @Service
 public class LoanApplicationService {
@@ -74,7 +77,7 @@ public class LoanApplicationService {
                 request.loanAmount(),
                 request.tenorMonth(),
                 cleanPurpose,
-                "PENDING",
+                LoanStatus.SUBMITED,
                 now,
                 now,
                 null,
@@ -89,9 +92,31 @@ public class LoanApplicationService {
     }
 
     // Service Get All Loan
-    public List<LoanApplicationResponse> getAllLoanApplications() {
+    public List<LoanApplicationResponse> getAllLoanApplications(String status, Long customerId) {
+        String keywordStatus = status == null ? "" : status.trim().toUpperCase();
+
+        boolean statusProvided = !keywordStatus.isBlank();
+        boolean customerIdProvided = customerId != null;
+
         return loanApplicationStorage.values()
                 .stream()
+                .filter(loan -> {
+                    boolean statusMatch = statusProvided &&
+                            loan.getStatus().name().equals(keywordStatus);
+
+                    boolean customerIdMatch = customerIdProvided &&
+                            loan.getCustomerId().equals(customerId);
+
+                    if (!statusProvided && !customerIdProvided) {
+                        return true;
+                    }
+
+                    if (statusProvided && customerIdProvided) {
+                        return statusMatch && customerIdMatch;
+                    }
+
+                    return statusMatch || customerIdMatch;
+                })
                 .map(this::toLoanAppResponse)
                 .toList();
     }
@@ -108,20 +133,24 @@ public class LoanApplicationService {
     }
 
     // Service PATCH / APPROVE Loan
-    public LoanApplicationResponse approveLoanApplication(Long id, String approvedBy) {
+    public LoanApplicationResponse approveLoanApplication(Long id, String approvedBy, Roles role) {
         LoanApplication loanApplication = loanApplicationStorage.get(id);
 
         if (loanApplication == null) {
             throw new LoanNotFoundException(id);
         }
 
-        if (!loanApplication.getStatus().equals("PENDING")) {
+        if (!loanApplication.getStatus().equals(LoanStatus.SUBMITED)) {
             throw new IllegalArgumentException("Loan Application Processed!");
+        }
+
+        if (role == Roles.MANAGER && loanApplication.getLoanAmount() <= 50_000_000) {
+            throw new ForbiddenException("Manager hanya boleh approve loan di atas 50 juta!");
         }
 
         ZonedDateTime now = ZonedDateTime.now();
 
-        loanApplication.setStatus("APPROVED");
+        loanApplication.setStatus(LoanStatus.APPROVED);
         loanApplication.setApprovedAt(now);
         loanApplication.setApprovedBy(approvedBy);
         loanApplication.setUpdatedAt(now);
@@ -131,6 +160,7 @@ public class LoanApplicationService {
         return toLoanAppResponse(loanApplication);
     }
 
+    // Service Reject
     public LoanApplicationResponse rejectLoanApplication(Long id, String rejectedBy) {
         LoanApplication loanApplication = loanApplicationStorage.get(id);
 
@@ -138,15 +168,40 @@ public class LoanApplicationService {
             throw new LoanNotFoundException(id);
         }
 
-        if (!loanApplication.getStatus().equals("PENDING")) {
+        if (!loanApplication.getStatus().equals(LoanStatus.SUBMITED)) {
             throw new IllegalArgumentException("Loan Application Processed!");
         }
 
         ZonedDateTime now = ZonedDateTime.now();
 
-        loanApplication.setStatus("REJECTED");
+        loanApplication.setStatus(LoanStatus.REJECTED);
         loanApplication.setApprovedAt(now);
         loanApplication.setApprovedBy(rejectedBy);
+        loanApplication.setUpdatedAt(now);
+
+        loanApplicationStorage.put(id, loanApplication);
+
+        return toLoanAppResponse(loanApplication);
+    }
+
+    // Service Cancled
+    public LoanApplicationResponse cancleLoanApplication(Long id, String cancledBy) {
+        LoanApplication loanApplication = loanApplicationStorage.get(id);
+
+        if (loanApplication == null) {
+            throw new LoanNotFoundException(id);
+        }
+
+        if (!loanApplication.getStatus().equals(LoanStatus.SUBMITED)) {
+            throw new IllegalArgumentException("Loan Application Processed!");
+        }
+        
+
+        ZonedDateTime now = ZonedDateTime.now();
+
+        loanApplication.setStatus(LoanStatus.CANCLED);
+        loanApplication.setApprovedAt(now);
+        loanApplication.setApprovedBy(cancledBy);
         loanApplication.setUpdatedAt(now);
 
         loanApplicationStorage.put(id, loanApplication);

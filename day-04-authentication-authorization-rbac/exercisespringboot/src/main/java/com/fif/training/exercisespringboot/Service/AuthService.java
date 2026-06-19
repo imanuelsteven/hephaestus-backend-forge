@@ -32,16 +32,19 @@ public class AuthService {
         userStorage.put(1L, new User("admin", "admin123", Roles.ADMIN));
         userStorage.put(2L, new User("staff", "staff123", Roles.STAFF));
         userStorage.put(3L, new User("approver", "approver123", Roles.APPROVER));
+        userStorage.put(4L, new User("manager", "manager123", Roles.MANAGER));
     }
 
     private void seedTokens() {
         tokenByUsername.put("admin", "token-admin");
         tokenByUsername.put("staff", "token-staff");
         tokenByUsername.put("approver", "token-approver");
+        tokenByUsername.put("manager", "token-manager");
 
         usernameByToken.put("token-admin", "admin");
         usernameByToken.put("token-staff", "staff");
         usernameByToken.put("token-approver", "approver");
+        usernameByToken.put("token-manager", "manager");
     }
 
     // Service Login
